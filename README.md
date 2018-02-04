@@ -36,3 +36,11 @@ Search nearby chats:
 You should now be able to send requests to the server running locally on your computer.
 http://localhost:8888
 If you drop the url into a browser, it should say 'Not Found.' But that's fine, we'll be sending requests instead.
+
+### MySQL Local Setup
+1. Download and install MySQL community edition, set it up as a dev machine.
+``` 
+    User: LocalChat
+    Password: 0rZv5#VA
+    User Port: 33060
+```
