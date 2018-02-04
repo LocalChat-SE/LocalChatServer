@@ -1,5 +1,5 @@
 from flask import Flask
-from flask import request, render_template
+from flask import request, render_template, session
 
 from json import dumps
 import pymysql
@@ -9,6 +9,7 @@ from datetime import datetime
 warnings.filterwarnings('ignore', '.*1050.*')
 warnings.filterwarnings('ignore', '.*1007.*')
 
+# MySQL credentials
 hostname = 'localhost'
 username = 'LocalChat'
 password = '0rZv5#VA'
@@ -19,6 +20,9 @@ connection = pymysql.connect(host=hostname, user=username, passwd=password)
 
 # Initialize globals
 app = Flask(__name__)
+
+# Used to encrypt session info
+app.secret_key = '9@hGy1%UVBAf8!mUe0^QydC7'
 
 # To send a POST in postman:
 # https://stackoverflow.com/questions/39660074/post-image-data-using-postman
@@ -67,31 +71,53 @@ with connection.cursor() as cursor:
 connection.commit()
 
 
+# For debugging only
 @app.route("/")
 def index():
-
     with connection.cursor() as cursor:
         table_name = 'users'
         cursor.execute('SELECT * FROM ' + table_name)
         return render_template('table.html', title=table_name, items=cursor.fetchall())
 
 
-@app.route('/login/', methods=['POST'])
-def chat():
+@app.route('/login', methods=['POST'])
+def login():
+    # Ensure key is valid
+    if request.values['api_key'] != api_key:
+        return str({'status': False, 'description': 'invalid api key'})
+
+    # Attempt to login
+    with connection.cursor() as cursor:
+        data = (request.values['username'], request.values['pass_hash'])
+        cursor.execute("SELECT * FROM users WHERE username=%s, pass_hash=%s", data)
+
+        if cursor.fetchone() is not None:
+            session['username'] = request.values['username']
+            return dumps({'status': True, 'description': 'logged into server'})
+
+        else:
+            return dumps({'status': False, 'description': 'credentials do not match'})
+
+
+@app.route('/logout', methods=['POST'])
+def logout():
     # Ensure key is valid
     if request.values['api_key'] != api_key:
         return str({'status': False, 'description': 'invalid api key'})
 
     with connection.cursor() as cursor:
-        data = (request.values['username'], request.values['hash'])
-        cursor.execute("SELECT * FROM users WHERE username=%s, hash=%s", data)
-        status = cursor.fetchone() is not None
+        data = (request.values['username'], request.values['pass_hash'])
+        cursor.execute("SELECT * FROM users WHERE username=%s, pass_hash=%s", data)
 
-    # Convert to json string and return
-    return dumps({'success': status, 'passed_value': request.values['value']})
+        if cursor.fetchone() is not None:
+            session.pop(request.values['username'], None)
+            return dumps({'status': True, 'description': 'logged off server'})
+
+        else:
+            return dumps({'status': False, 'description': 'credentials do not match'})
 
 
-@app.route('/new_user/', methods=['POST'])
+@app.route('/new_user', methods=['POST'])
 def new_user():
     # Ensure key is valid
     if request.values['api_key'] != api_key:
@@ -116,8 +142,34 @@ def new_user():
     return dumps({'status': status, 'description': description})
 
 
-@app.route('/delete_user/', methods=['POST'])
+@app.route('/delete_user', methods=['POST'])
 def delete_user():
+    # Ensure key is valid
+    if request.values['api_key'] != api_key:
+        return str({'status': False, 'description': 'invalid api key'})
+
+    with connection.cursor() as cursor:
+
+        data = (request.values['username'], request.values['pass_hash'])
+
+        cursor.execute("SELECT 1 FROM users WHERE username=%s AND pass_hash=%s", data)
+        if cursor.fetchone() is None:
+            status = False
+            description = 'user does not exist'
+
+        else:
+            cursor.execute("DELETE FROM users WHERE username=%s AND pass_hash=%s", data)
+            status = True
+            description = 'user removed from database'
+
+            connection.commit()
+
+    # Convert to json string and return
+    return dumps({'status': status, 'description': description})
+
+
+@app.route('/new_chat', methods=['POST'])
+def new_chat():
     # Ensure key is valid
     if request.values['api_key'] != api_key:
         return str({'status': False, 'description': 'invalid api key'})
