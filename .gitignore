@@ -1,0 +1,10 @@
+# Language files
+/__pycache__/
+*.pyc
+
+# LocalChat files
+api_key.txt
+LocalChat.db
+
+# IDE files
+.idea/
