@@ -1,0 +1,11 @@
+<header>TABLE: {{title}}</header>
+
+<table style="width:100%">
+{% for item in items %}
+<TR>
+    {% for column in item %}
+        <TD>{{column}}</TD>
+    {% endfor %}
+</TR>
+{% endfor %}
+</table>

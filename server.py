@@ -1,8 +1,13 @@
 from flask import Flask
-from flask import request
+from flask import request, render_template
 
 from json import dumps
 import pymysql
+import warnings
+from datetime import datetime
+# Ignore warnings for attempting to create the database when the database has already been created
+warnings.filterwarnings('ignore', '.*1050.*')
+warnings.filterwarnings('ignore', '.*1007.*')
 
 hostname = 'localhost'
 username = 'LocalChat'
@@ -12,6 +17,16 @@ database = 'localchat'
 
 connection = pymysql.connect(host=hostname, user=username, passwd=password)
 
+# Initialize globals
+app = Flask(__name__)
+
+# To send a POST in postman:
+# https://stackoverflow.com/questions/39660074/post-image-data-using-postman
+
+# Remember to create a text file with the api key sent in the post.
+with open('api_key.txt', 'r') as keyfile:
+    api_key = keyfile.readline().strip()
+
 with connection.cursor() as cursor:
     # cursor.execute("DROP DATABASE " + database)
     cursor.execute("CREATE DATABASE IF NOT EXISTS " + database)
@@ -19,7 +34,7 @@ with connection.cursor() as cursor:
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users(
-            user_id VARCHAR(255),
+            user_id VARCHAR(36),
             username VARCHAR(255),
             email VARCHAR(255),
             join_date DATETIME,
@@ -29,7 +44,7 @@ with connection.cursor() as cursor:
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS chats (
-            chat_id VARCHAR(255),
+            chat_id VARCHAR(36),
             start_date DATETIME,
             title VARCHAR(255),
             location POINT,
@@ -39,7 +54,7 @@ with connection.cursor() as cursor:
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS messages (
-            message_id VARCHAR(255),
+            message_id VARCHAR(36),
             user_id VARCHAR(255),
             chat_id VARCHAR(255),
             send_date DATETIME,
@@ -52,26 +67,20 @@ with connection.cursor() as cursor:
 connection.commit()
 
 
-cursor = connection.cursor()
+@app.route("/")
+def index():
 
-# Initialize globals
-app = Flask(__name__)
-
-# To send a POST in postman:
-# https://stackoverflow.com/questions/39660074/post-image-data-using-postman
-
-# Remember to create a text file with the api key sent in the post.
-with open('api_key.txt', 'r') as keyfile:
-    api_key = keyfile.readline().strip()
+    with connection.cursor() as cursor:
+        table_name = 'users'
+        cursor.execute('SELECT * FROM ' + table_name)
+        return render_template('table.html', title=table_name, items=cursor.fetchall())
 
 
-# username
-# hash
 @app.route('/login/', methods=['POST'])
 def chat():
     # Ensure key is valid
     if request.values['api_key'] != api_key:
-        return str({'error': 'invalid api key'})
+        return str({'status': False, 'description': 'invalid api key'})
 
     with connection.cursor() as cursor:
         data = (request.values['username'], request.values['hash'])
@@ -80,6 +89,57 @@ def chat():
 
     # Convert to json string and return
     return dumps({'success': status, 'passed_value': request.values['value']})
+
+
+@app.route('/new_user/', methods=['POST'])
+def new_user():
+    # Ensure key is valid
+    if request.values['api_key'] != api_key:
+        return str({'status': False, 'description': 'invalid api key'})
+
+    with connection.cursor() as cursor:
+
+        cursor.execute("SELECT 1 FROM users WHERE email=%s", [request.values['email']])
+        if cursor.fetchone() is not None:
+            status = False
+            description = 'user already exists'
+
+        else:
+            data = (request.values['username'], request.values['email'], datetime.now(), request.values['pass_hash'])
+            cursor.execute("INSERT INTO users VALUES (UUID(), %s, %s, %s, %s)", data)
+            status = True
+            description = 'user added to database'
+
+            connection.commit()
+
+    # Convert to json string and return
+    return dumps({'status': status, 'description': description})
+
+
+@app.route('/delete_user/', methods=['POST'])
+def delete_user():
+    # Ensure key is valid
+    if request.values['api_key'] != api_key:
+        return str({'status': False, 'description': 'invalid api key'})
+
+    with connection.cursor() as cursor:
+
+        data = (request.values['username'], request.values['pass_hash'])
+
+        cursor.execute("SELECT 1 FROM users WHERE username=%s AND pass_hash=%s", data)
+        if cursor.fetchone() is None:
+            status = False
+            description = 'user does not exist'
+
+        else:
+            cursor.execute("DELETE FROM users WHERE username=%s AND pass_hash=%s", data)
+            status = True
+            description = 'user removed from database'
+
+            connection.commit()
+
+    # Convert to json string and return
+    return dumps({'status': status, 'description': description})
 
 
 if __name__ == '__main__':
