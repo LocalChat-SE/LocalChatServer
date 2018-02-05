@@ -109,13 +109,14 @@ def login():
     # Attempt to login
     with connection.cursor() as cursor:
         data = (request.values['username'], request.values['pass_hash'])
-        user_id = cursor.execute("SELECT user_id FROM users WHERE username=%s, pass_hash=%s", data).fetchOne()
+        cursor.execute("SELECT user_id FROM users WHERE username=%s AND pass_hash=%s", data)
+        user_id = cursor.fetchone()
 
-    if user_id is None:
-        return dumps({'status': False, 'description': 'credentials do not match'})
+        if user_id is None:
+            return dumps({'status': False, 'description': 'credentials do not match'})
 
-    session['user_id'] = user_id
-    return dumps({'status': True, 'description': 'logged into server'})
+        session['user_id'] = user_id[0]
+        return dumps({'status': True, 'description': 'logged into server'})
 
 
 @app.route('/logout', methods=['POST'])
@@ -124,15 +125,10 @@ def logout():
     if request.values['api_key'] != api_key:
         return dumps({'status': False, 'description': 'invalid api key'})
 
-    # Use credentials to log out
-    with connection.cursor() as cursor:
-        data = (request.values['username'], request.values['pass_hash'])
-        user_id = cursor.execute("SELECT user_id FROM users WHERE username=%s, pass_hash=%s", data).fetchOne()
+    if 'user_id' not in session:
+        return dumps({'status': True, 'description': 'already logged out'})
 
-    if user_id is None:
-        return dumps({'status': False, 'description': 'credentials do not match'})
-
-    session.pop(request.values['user_id'], None)
+    session.pop('user_id', None)
     return dumps({'status': True, 'description': 'logged off server'})
 
 

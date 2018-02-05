@@ -58,11 +58,125 @@
 		{
 			"name": "delete_user",
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
-				"body": {},
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "username",
+							"value": "test_user",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "pass_hash",
+							"value": "test_hash",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "api_key",
+							"value": "SecretKey",
+							"description": "",
+							"type": "text"
+						}
+					]
+				},
 				"url": {
-					"raw": ""
+					"raw": "localhost:8888/delete_user/",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"delete_user",
+						""
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "api_key",
+							"value": "SecretKey",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "username",
+							"value": "test_user",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "pass_hash",
+							"value": "test_hash",
+							"description": "",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:8888/login",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"login"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "logout",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "api_key",
+							"value": "SecretKey",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "username",
+							"value": "test_user",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "pass_hash",
+							"value": "test_hash",
+							"description": "",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:8888/logout",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"logout"
+					]
 				},
 				"description": ""
 			},
