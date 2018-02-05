@@ -2,21 +2,10 @@
 Centralized server for communication between android users and message storage
 
 
-### Specification
-Send message:
-1. Accept message via the flask API
-2. Store message in LocalChat.db
-3. Send message or notification to user
-
-Retrieve chat history:
-1. Accept request for history
-2. Query database for history
-3. Return history
-
-Search nearby chats:
-1. Accept request for nearby chats
-2. Query database for nearby chats
-3. Return nearby chats
+### Documentation
+Endpoints for the api are documented in the ChatServer.postman_collection.json.  
+This documentation can be imported into postman, where you can also send requests.  
+https://www.getpostman.com/  
 
 ### Setup
 1. Clone this repository with git. 'Github for Windows' has a nice GUI for folks just starting out.
@@ -28,14 +17,14 @@ Search nearby chats:
     cd [PATH_TO_CLONED_REPOSITORY]
     pip install -r requirements.txt
 ```
-4. Create './api_key.txt' with our api key inside.
+4. Create './api_key.txt' with our api key inside. The docs use 'SecretKey' by default.
 5. Start the server:
 ```
     python ./server.py
 ```
-You should now be able to send requests to the server running locally on your computer.
-http://localhost:8888
-If you drop the url into a browser, it should say 'Not Found.' But that's fine, we'll be sending requests instead.
+You should now be able to send requests to the server running locally on your computer.  
+http://localhost:8888  
+If you drop the url into a browser, it should say 'Not Found.' But that's fine, we'll be sending requests instead.  
 
 ### MySQL Local Setup
 1. Download and install MySQL community edition, set it up as a dev machine.
