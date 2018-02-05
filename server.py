@@ -168,9 +168,10 @@ def delete_user():
     if request.values['api_key'] != api_key:
         return dumps({'status': False, 'description': 'invalid api key'})
 
-    if 'user_id' in session:
-        with connection.cursor() as cursor:
-            cursor.execute("DELETE FROM users WHERE username=%s AND pass_hash=%s", session['user_id'])
+    if 'user_id' not in session:
+        return dumps({'status': False, 'description': 'user is not logged in'})
+
+    data = (session['user_id'], request.values['pass_hash'])
 
     with connection.cursor() as cursor:
 
