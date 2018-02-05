@@ -5,6 +5,7 @@ from json import dumps
 import pymysql
 import warnings
 from datetime import datetime
+
 # Ignore warnings for attempting to create the database when the database has already been created
 warnings.filterwarnings('ignore', '.*1050.*')
 warnings.filterwarnings('ignore', '.*1007.*')
@@ -34,7 +35,7 @@ with open('api_key.txt', 'r') as keyfile:
 with connection.cursor() as cursor:
     # cursor.execute("DROP DATABASE " + database)
     cursor.execute("CREATE DATABASE IF NOT EXISTS " + database)
-    cursor.execute("use " + database)
+    cursor.execute("USE " + database)
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users(
@@ -68,6 +69,15 @@ with connection.cursor() as cursor:
             FOREIGN KEY (chat_id) REFERENCES chats(chat_id)
         )''')
 
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS chat_members (
+            chat_id VARCHAR(36),
+            user_id VARCHAR(36),
+            PRIMARY KEY (chat_id, user_id),
+            FOREIGN KEY (chat_id) REFERENCES users(user_id),
+            FOREIGN KEY (user_id) REFERENCES chats(chat_id)
+        )''')
+
 connection.commit()
 
 
@@ -75,53 +85,64 @@ connection.commit()
 @app.route("/")
 def index():
     with connection.cursor() as cursor:
-        table_name = 'users'
-        cursor.execute('SELECT * FROM ' + table_name)
-        return render_template('table.html', title=table_name, items=cursor.fetchall())
+        cursor.execute('SELECT * FROM users')
+        users = cursor.fetchall()
+
+        cursor.execute('SELECT * FROM chats')
+        chats = cursor.fetchall()
+
+        cursor.execute('SELECT * FROM messages')
+        messages = cursor.fetchall()
+
+        return render_template('table.html', users=users, chats=chats, messages=messages)
 
 
 @app.route('/login', methods=['POST'])
 def login():
     # Ensure key is valid
     if request.values['api_key'] != api_key:
-        return str({'status': False, 'description': 'invalid api key'})
+        return dumps({'status': False, 'description': 'invalid api key'})
+
+    if 'user_id' in session:
+        return dumps({'status': True, 'description': 'user already logged into server'})
 
     # Attempt to login
     with connection.cursor() as cursor:
         data = (request.values['username'], request.values['pass_hash'])
-        cursor.execute("SELECT * FROM users WHERE username=%s, pass_hash=%s", data)
+        user_id = cursor.execute("SELECT user_id FROM users WHERE username=%s, pass_hash=%s", data).fetchOne()
 
-        if cursor.fetchone() is not None:
-            session['username'] = request.values['username']
-            return dumps({'status': True, 'description': 'logged into server'})
+    if user_id is None:
+        return dumps({'status': False, 'description': 'credentials do not match'})
 
-        else:
-            return dumps({'status': False, 'description': 'credentials do not match'})
+    session['user_id'] = user_id
+    return dumps({'status': True, 'description': 'logged into server'})
 
 
 @app.route('/logout', methods=['POST'])
 def logout():
     # Ensure key is valid
     if request.values['api_key'] != api_key:
-        return str({'status': False, 'description': 'invalid api key'})
+        return dumps({'status': False, 'description': 'invalid api key'})
 
+    # Use credentials to log out
     with connection.cursor() as cursor:
         data = (request.values['username'], request.values['pass_hash'])
-        cursor.execute("SELECT * FROM users WHERE username=%s, pass_hash=%s", data)
+        user_id = cursor.execute("SELECT user_id FROM users WHERE username=%s, pass_hash=%s", data).fetchOne()
 
-        if cursor.fetchone() is not None:
-            session.pop(request.values['username'], None)
-            return dumps({'status': True, 'description': 'logged off server'})
+    if user_id is None:
+        return dumps({'status': False, 'description': 'credentials do not match'})
 
-        else:
-            return dumps({'status': False, 'description': 'credentials do not match'})
+    session.pop(request.values['user_id'], None)
+    return dumps({'status': True, 'description': 'logged off server'})
 
 
 @app.route('/new_user', methods=['POST'])
 def new_user():
     # Ensure key is valid
     if request.values['api_key'] != api_key:
-        return str({'status': False, 'description': 'invalid api key'})
+        return dumps({'status': False, 'description': 'invalid api key'})
+
+    data = (request.values['username'], request.values['email'], datetime.now(), request.values['pass_hash'])
 
     with connection.cursor() as cursor:
 
@@ -131,7 +152,6 @@ def new_user():
             description = 'user already exists'
 
         else:
-            data = (request.values['username'], request.values['email'], datetime.now(), request.values['pass_hash'])
             cursor.execute("INSERT INTO users VALUES (UUID(), %s, %s, %s, %s)", data)
             status = True
             description = 'user added to database'
@@ -146,11 +166,13 @@ def new_user():
 def delete_user():
     # Ensure key is valid
     if request.values['api_key'] != api_key:
-        return str({'status': False, 'description': 'invalid api key'})
+        return dumps({'status': False, 'description': 'invalid api key'})
+
+    if 'user_id' in session:
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM users WHERE username=%s AND pass_hash=%s", session['user_id'])
 
     with connection.cursor() as cursor:
-
-        data = (request.values['username'], request.values['pass_hash'])
 
         cursor.execute("SELECT 1 FROM users WHERE username=%s AND pass_hash=%s", data)
         if cursor.fetchone() is None:
@@ -172,26 +194,66 @@ def delete_user():
 def new_chat():
     # Ensure key is valid
     if request.values['api_key'] != api_key:
-        return str({'status': False, 'description': 'invalid api key'})
+        return dumps({'status': False, 'description': 'invalid api key'})
+
+    if 'user_id' not in session:
+        return dumps({'status': False, 'description': 'user is not logged in'})
 
     with connection.cursor() as cursor:
+        uuid = cursor.execute("SELECT UUID()").fetchOne()
+        data = (uuid,
+                datetime.now(),
+                request.values['title'],
+                request.values['location'],
+                request.values['description'])
 
-        data = (request.values['username'], request.values['pass_hash'])
+        cursor.execute("INSERT INTO chats VALUES (%s, %s, %s, %s, %s)", data)
+        cursor.execute("INSERT INTO chat_members VALUES (%s, %s)", (uuid, session['user_id']))
 
-        cursor.execute("SELECT 1 FROM users WHERE username=%s AND pass_hash=%s", data)
-        if cursor.fetchone() is None:
-            status = False
-            description = 'user does not exist'
+        connection.commit()
 
-        else:
-            cursor.execute("DELETE FROM users WHERE username=%s AND pass_hash=%s", data)
-            status = True
-            description = 'user removed from database'
+    return dumps({'status': True, 'description': 'chat added to database'})
 
-            connection.commit()
 
-    # Convert to json string and return
-    return dumps({'status': status, 'description': description})
+@app.route('/join_chat', methods=['POST'])
+def join_chat():
+    # Ensure key is valid
+    if request.values['api_key'] != api_key:
+        return dumps({'status': False, 'description': 'invalid api key'})
+
+    if 'user_id' not in session:
+        return dumps({'status': False, 'description': 'user is not logged in'})
+
+    with connection.cursor() as cursor:
+        data = (request.values['chat_id'], session['user_id'])
+
+        cursor.execute("SELECT 1 from chat_members WHERE (chat_id, user_id)=(%s, %s)", data)
+        if cursor.fetchOne() is not None:
+            return dumps({'status': False, 'description': 'user already in group'})
+
+        cursor.execute("INSERT INTO chat_members VALUES (%s, %s)", data)
+        connection.commit()
+
+    return dumps({'status': True, 'description': 'user added to chat'})
+
+
+@app.route('/new_message', methods=['POST'])
+def new_message():
+
+    # Ensure key is valid
+    if request.values['api_key'] != api_key:
+        return dumps({'status': False, 'description': 'invalid api key'})
+
+    if 'user_id' not in session:
+        return dumps({'status': False, 'description': 'user is not logged in'})
+
+    data = (session['user_id'], request.values['chat_id'], datetime.now(), request.values['value'])
+
+    with connection.cursor() as cursor:
+        cursor.execute("INSERT INTO messages VALUES (UUID(), %s, %s, %s, %s)", data)
+        connection.commit()
+
+    return dumps({'status': True, 'description': 'message added to database'})
 
 
 if __name__ == '__main__':

@@ -1,7 +1,33 @@
-<header>TABLE: {{title}}</header>
 
+<header>TABLE: users</header>
 <table style="width:100%">
-{% for item in items %}
+{% for item in users %}
+<TR>
+    {% for column in item %}
+        <TD>{{column}}</TD>
+    {% endfor %}
+</TR>
+{% endfor %}
+</table>
+
+
+<br>
+<header>TABLE: chats</header>
+<table style="width:100%">
+{% for item in chats %}
+<TR>
+    {% for column in item %}
+        <TD>{{column}}</TD>
+    {% endfor %}
+</TR>
+{% endfor %}
+</table>
+
+
+<br>
+<header>TABLE: messages</header>
+<table style="width:100%">
+{% for item in messages %}
 <TR>
     {% for column in item %}
         <TD>{{column}}</TD>
