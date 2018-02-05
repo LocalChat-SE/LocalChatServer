@@ -52,8 +52,9 @@ with connection.cursor() as cursor:
             chat_id VARCHAR(36),
             start_date DATETIME,
             title VARCHAR(255),
-            location POINT,
+            location POINT NOT NULL,
             description VARCHAR(255),
+            SPATIAL INDEX (location),
             PRIMARY KEY (chat_id)
         )''')
 
@@ -208,8 +209,6 @@ def new_chat():
                 request.values['location'],
                 request.values['description'])
 
-        print(session['user_id'])
-
         cursor.execute("INSERT INTO chats VALUES (%s, %s, %s, ST_GeomFromText(%s), %s)", data)
         cursor.execute("INSERT INTO chat_members VALUES (%s, %s)", (uuid, session['user_id']))
 
@@ -240,9 +239,27 @@ def join_chat():
     return dumps({'status': True, 'description': 'user added to chat'})
 
 
+@app.route('/get_nearby_chats', methods=['POST'])
+def get_nearby_chats():
+    # Ensure key is valid
+    if request.values['api_key'] != api_key:
+        return dumps({'status': False, 'description': 'invalid api key'})
+
+    with connection.cursor() as cursor:
+
+        cursor.execute("""SELECT chat_id, title, 
+            ST_X(location) AS "latitude",
+            ST_Y(location) AS "longitude",
+            (ST_Length(ST_GeometryFromWKB(ST_asWKB(LineString(location, ST_GeomFromText(%s)))))) AS distance
+            FROM chats 
+            ORDER BY distance ASC;""", [request.values['location']])
+        chats = cursor.fetchall()
+
+    return dumps({'status': True, 'description': 'chats returned sorted by distance', 'results': chats})
+
+
 @app.route('/new_message', methods=['POST'])
 def new_message():
-
     # Ensure key is valid
     if request.values['api_key'] != api_key:
         return dumps({'status': False, 'description': 'invalid api key'})

@@ -269,6 +269,42 @@
 				"description": ""
 			},
 			"response": []
+		},
+		{
+			"name": "get_nearby_chats",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "api_key",
+							"value": "SecretKey",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "location",
+							"value": "Point(32.987115 -96.747843)",
+							"description": "",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:8888/get_nearby_chats",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"get_nearby_chats"
+					]
+				},
+				"description": ""
+			},
+			"response": []
 		}
 	]
 }
