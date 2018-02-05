@@ -35,3 +35,16 @@
 </TR>
 {% endfor %}
 </table>
+
+
+<br>
+<header>TABLE: chat_members</header>
+<table style="width:100%">
+{% for item in chat_members %}
+<TR>
+    {% for column in item %}
+        <TD>{{column}}</TD>
+    {% endfor %}
+</TR>
+{% endfor %}
+</table>

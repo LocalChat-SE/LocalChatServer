@@ -41,14 +41,13 @@
 					]
 				},
 				"url": {
-					"raw": "localhost:8888/new_user/",
+					"raw": "localhost:8888/new_user",
 					"host": [
 						"localhost"
 					],
 					"port": "8888",
 					"path": [
-						"new_user",
-						""
+						"new_user"
 					]
 				},
 				"description": ""
@@ -84,14 +83,13 @@
 					]
 				},
 				"url": {
-					"raw": "localhost:8888/delete_user/",
+					"raw": "localhost:8888/delete_user",
 					"host": [
 						"localhost"
 					],
 					"port": "8888",
 					"path": [
-						"delete_user",
-						""
+						"delete_user"
 					]
 				},
 				"description": ""
@@ -176,6 +174,96 @@
 					"port": "8888",
 					"path": [
 						"logout"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "new_chat",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "api_key",
+							"value": "SecretKey",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "title",
+							"value": "test_chat",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "location",
+							"value": "POINT(32.987286 -6.748288)",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "description",
+							"value": "This is a test chat, for test chatting!",
+							"description": "",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:8888/new_chat",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"new_chat"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "new_message",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "api_key",
+							"value": "SecretKey",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "chat_id",
+							"value": "fe9e5144-0a20-11e8-b993-f48e38f22fe0",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "value",
+							"value": "This is a test message!",
+							"description": "",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:8888/new_message",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"new_message"
 					]
 				},
 				"description": ""

@@ -74,8 +74,8 @@ with connection.cursor() as cursor:
             chat_id VARCHAR(36),
             user_id VARCHAR(36),
             PRIMARY KEY (chat_id, user_id),
-            FOREIGN KEY (chat_id) REFERENCES users(user_id),
-            FOREIGN KEY (user_id) REFERENCES chats(chat_id)
+            FOREIGN KEY (chat_id) REFERENCES chats(chat_id),
+            FOREIGN KEY (user_id) REFERENCES users(user_id)
         )''')
 
 connection.commit()
@@ -94,7 +94,10 @@ def index():
         cursor.execute('SELECT * FROM messages')
         messages = cursor.fetchall()
 
-        return render_template('table.html', users=users, chats=chats, messages=messages)
+        cursor.execute('SELECT * FROM chat_members')
+        chat_members = cursor.fetchall()
+
+        return render_template('table.html', users=users, chats=chats, messages=messages, chat_members=chat_members)
 
 
 @app.route('/login', methods=['POST'])
@@ -197,14 +200,17 @@ def new_chat():
         return dumps({'status': False, 'description': 'user is not logged in'})
 
     with connection.cursor() as cursor:
-        uuid = cursor.execute("SELECT UUID()").fetchOne()
+        cursor.execute("SELECT UUID()")
+        uuid = cursor.fetchone()[0]
         data = (uuid,
                 datetime.now(),
                 request.values['title'],
                 request.values['location'],
                 request.values['description'])
 
-        cursor.execute("INSERT INTO chats VALUES (%s, %s, %s, %s, %s)", data)
+        print(session['user_id'])
+
+        cursor.execute("INSERT INTO chats VALUES (%s, %s, %s, ST_GeomFromText(%s), %s)", data)
         cursor.execute("INSERT INTO chat_members VALUES (%s, %s)", (uuid, session['user_id']))
 
         connection.commit()
