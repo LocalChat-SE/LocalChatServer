@@ -24,7 +24,7 @@ https://www.getpostman.com/
 ```
 You should now be able to send requests to the server running locally on your computer.  
 http://localhost:8888  
-If you drop the url into a browser, it should say 'Not Found.' But that's fine, we'll be sending requests instead.  
+If you drop the url into a browser, it will format the entire database into tables in your browser. This is to make debugging easy!  
 
 ### MySQL Local Setup
 1. Download and install MySQL community edition, set it up as a dev machine.
