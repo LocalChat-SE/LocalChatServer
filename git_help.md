@@ -10,7 +10,7 @@ https://git-scm.com/download/win
 The GUI sign in should be straightforward. 
 Alternatively, to sign in on the command interface (if you choose to use it), check out some stack overflow posts on ‘git config --global’ and I recommend the credential helper.
 
-3. Clone the repository.vThere is a green button on the upper right side of the page that says ‘Clone or Download’. Copy the .git web url from that pop-up. From the GUI, there should be an option somewhere to add a repository- from there you can paste that repository url.
+3. Clone the repository. There is a green button on the upper right side of the page that says ‘Clone or Download’. Copy the .git web url from that pop-up. From the GUI, there should be an option somewhere to add a repository- from there you can paste that repository url.
 
 If you use the command interface, type 
 ‘git clone [URL]’
