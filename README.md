@@ -33,3 +33,8 @@ If you drop the url into a browser, it will format the entire database into tabl
     Password: 0rZv5#VA
     User Port: 33060
 ```
+2. Sometimes the server is stubborn and won't start. This can be fixed via running the following command in an administrator cmd session:
+```
+"C:\Program Files\MySQL\MySQL Server 5.7\bin\mysqld" --install
+```
+You may need to tweak the path.

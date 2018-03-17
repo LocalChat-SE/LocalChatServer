@@ -1,4 +1,4 @@
-import DBManager
+from DBManager import DBManager
 import pymysql
 
 import warnings
@@ -9,11 +9,12 @@ from datetime import datetime
 warnings.filterwarnings('ignore', '.*1050.*')
 warnings.filterwarnings('ignore', '.*1007.*')
 
-config = json.load('./config.json')
+config = json.load(open('./config.json', 'r'))
 
 
 class MySQLManager(DBManager):
     def __init__(self):
+        print(config)
 
         self.connection = pymysql.connect(
             host=config['hostname'],
@@ -156,7 +157,6 @@ class MySQLManager(DBManager):
                 data = (uuid, datetime.now(), name, location, description)
 
                 cursor.execute("INSERT INTO chats VALUES (%s, %s, %s, ST_GeomFromText(%s), %s)", data)
-                cursor.execute("INSERT INTO chat_members VALUES (%s, %s)", (uuid, session['user_id']))
 
                 self.connection.commit()
                 return True, 'new chat added', uuid

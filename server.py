@@ -10,7 +10,7 @@ app = Flask(__name__)
 # Used to encrypt session info
 app.secret_key = '9@hGy1%UVBAf8!mUe0^QydC7'
 
-config = json.load('./config.json')
+config = json.load(open('./config.json', 'r'))
 if config['type'] == 'MySQL':
     database = MySQLManager()
 else:
