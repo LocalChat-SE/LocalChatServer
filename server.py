@@ -104,14 +104,9 @@ def new_chat():
     if 'username' not in session:
         return json.dumps({'status': False, 'description': 'user is not logged in'})
 
-    data = {
-        'chat_id': None,
-        'name': request.values['name'],
-        'location': request.values['location'],
-        'description': request.values['description']
-    }
+    data = (request.values['name'], request.values['location'], request.values['description'])
 
-    status, description, chat_id = database.set_chat(**data)
+    status, description, chat_id = database.set_chat(*data)
     database.set_enrollment(chat_id, session['username'], modded=True)
 
     return json.dumps({
@@ -119,6 +114,49 @@ def new_chat():
         'description': description,
         'data': {'chat_id': chat_id}
     })
+
+
+@app.route('/update_chat_name', methods=['POST'])
+def update_chat_name():
+    # Ensure key is valid
+    if request.values['api_key'] != api_key:
+        return json.dumps({'status': False, 'description': 'invalid api key'})
+
+    if 'username' not in session:
+        return json.dumps({'status': False, 'description': 'user is not logged in'})
+
+    status, description = database.update_chat(request.values['chat_id'], name=request.values['name']})
+
+    return json.dumps({'status': status, 'description': description})
+
+
+
+@app.route('/update_chat_location', methods=['POST'])
+def update_chat_location():
+    # Ensure key is valid
+    if request.values['api_key'] != api_key:
+        return json.dumps({'status': False, 'description': 'invalid api key'})
+
+    if 'username' not in session:
+        return json.dumps({'status': False, 'description': 'user is not logged in'})
+
+    status, description = database.update_chat(request.values['chat_id'], location=request.values['location'])
+
+    return json.dumps({'status': status, 'description': description})
+
+
+@app.route('/update_chat_description', methods=['POST'])
+def update_chat_description():
+    # Ensure key is valid
+    if request.values['api_key'] != api_key:
+        return json.dumps({'status': False, 'description': 'invalid api key'})
+
+    if 'username' not in session:
+        return json.dumps({'status': False, 'description': 'user is not logged in'})
+
+    status, description = database.update_chat(request.values['chat_id'], description=request.values['description'])
+
+    return json.dumps({'status': status, 'description': description})
 
 
 @app.route('/set_enrollment', methods=['POST'])

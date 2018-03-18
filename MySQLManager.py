@@ -160,23 +160,38 @@ class MySQLManager(DBManager):
     def get_chat(self, chat_id, history=50):
         raise NotImplementedError
 
-    # for new/edit chat
-    def set_chat(self, chat_id=None, name=None, location=None, description=None):
+    # for new chat
+    def set_chat(self, name, location, description):
         with self.connection.cursor() as cursor:
-            # new chat
-            if not chat_id:
-                cursor.execute("SELECT UUID()")
-                uuid = cursor.fetchone()[0]
+            cursor.execute("SELECT UUID()")
+            uuid = cursor.fetchone()[0]
 
-                data = (uuid, datetime.now(), name, location, description)
+            data = (uuid, datetime.now(), name, location, description)
 
-                cursor.execute("INSERT INTO chats VALUES (%s, %s, %s, ST_GeomFromText(%s), %s)", data)
+            cursor.execute("INSERT INTO chats VALUES (%s, %s, %s, ST_GeomFromText(%s), %s)", data)
 
-                self.connection.commit()
-                return True, 'new chat added', uuid
-            else:
-                # TODO: implement edit chat
-                pass
+            self.connection.commit()
+            return True, 'new chat added', uuid
+
+    # for edit chat
+    def update_chat(self, chat_id, name=None, location=None, description=None):
+        with self.connection.cursor() as cursor:
+            # check if user is a moderator
+            cursor.execute(
+                "SELECT 1 FROM enrollments WHERE (chat_id, username, moderator)=(%s, %s, 1)", (chat_id, username))
+            if cursor.fetchone() is None:
+                return False, 'user has insufficient rights to edit the chat'
+
+            if name:
+                cursor.execute("UPDATE chats SET name=%s WHERE chat_id=%s", (name, chat_id))
+
+            if location:
+                cursor.execute("UPDATE chats SET location=%s WHERE chat_id=%s", (location, chat_id))
+
+            if description:
+                cursor.execute("UPDATE chats SET description=%s WHERE chat_id=%s", (description, chat_id))
+
+            return True, 'chat information has been updated'
 
     def new_message(self, chat_id, username, message):
 
