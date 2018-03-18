@@ -29,7 +29,7 @@ class DBManager(object):
     def set_chat(self, name, location, description):
         raise NotImplementedError
 
-    def update_chat(self, chat_id, name=None, location=None, description=None):
+    def update_chat(self, chat_id, username, name=None, location=None, description=None):
         raise NotImplementedError
 
     def new_message(self, chat_id, username, message):

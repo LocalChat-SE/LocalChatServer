@@ -174,7 +174,7 @@ class MySQLManager(DBManager):
             return True, 'new chat added', uuid
 
     # for edit chat
-    def update_chat(self, chat_id, name=None, location=None, description=None):
+    def update_chat(self, chat_id, username, name=None, location=None, description=None):
         with self.connection.cursor() as cursor:
             # check if user is a moderator
             cursor.execute(
@@ -257,7 +257,8 @@ class MySQLManager(DBManager):
                 return False, 'a moderator may not be banned'
 
             cursor.execute(
-                "UPDATE enrollments SET banned=%s WHERE (chat_id, username)=(%s, %s)", (bool(status), chat_id, username))
+                "UPDATE enrollments SET banned=%s WHERE (chat_id, username)=(%s, %s)",
+                (bool(status), chat_id, username))
 
             self.connection.commit()
             return True, 'user ban has been set/unset'

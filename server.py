@@ -23,6 +23,9 @@ else:
 with open('api_key.txt', 'r') as keyfile:
     api_key = keyfile.readline().strip()
 
+# I would have just decorated the api key and login checks to remove some duplicated code.
+# Unfortunately, flask seems to be checking string literal function names for repeats.
+
 
 # For debugging only
 @app.route("/")
@@ -125,10 +128,10 @@ def update_chat_name():
     if 'username' not in session:
         return json.dumps({'status': False, 'description': 'user is not logged in'})
 
-    status, description = database.update_chat(request.values['chat_id'], name=request.values['name']})
+    status, description = database.update_chat(
+        request.values['chat_id'], session['username'], name=request.values['name'])
 
     return json.dumps({'status': status, 'description': description})
-
 
 
 @app.route('/update_chat_location', methods=['POST'])
@@ -140,7 +143,8 @@ def update_chat_location():
     if 'username' not in session:
         return json.dumps({'status': False, 'description': 'user is not logged in'})
 
-    status, description = database.update_chat(request.values['chat_id'], location=request.values['location'])
+    status, description = database.update_chat(
+        request.values['chat_id'], session['name'], location=request.values['location'])
 
     return json.dumps({'status': status, 'description': description})
 
@@ -154,7 +158,8 @@ def update_chat_description():
     if 'username' not in session:
         return json.dumps({'status': False, 'description': 'user is not logged in'})
 
-    status, description = database.update_chat(request.values['chat_id'], description=request.values['description'])
+    status, description = database.update_chat(
+        request.values['chat_id'], session['name'], description=request.values['description'])
 
     return json.dumps({'status': status, 'description': description})
 

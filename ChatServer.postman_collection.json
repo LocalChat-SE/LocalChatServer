@@ -21,13 +21,7 @@
 							"type": "text"
 						},
 						{
-							"key": "email",
-							"value": "test_user@test_address.com",
-							"description": "",
-							"type": "text"
-						},
-						{
-							"key": "pass_hash",
+							"key": "password",
 							"value": "test_hash",
 							"description": "",
 							"type": "text"
@@ -63,13 +57,7 @@
 					"mode": "formdata",
 					"formdata": [
 						{
-							"key": "username",
-							"value": "test_user",
-							"description": "",
-							"type": "text"
-						},
-						{
-							"key": "pass_hash",
+							"key": "password",
 							"value": "test_hash",
 							"description": "",
 							"type": "text"
@@ -112,12 +100,12 @@
 						},
 						{
 							"key": "username",
-							"value": "test_user",
+							"value": "test_user2",
 							"description": "",
 							"type": "text"
 						},
 						{
-							"key": "pass_hash",
+							"key": "password",
 							"value": "test_hash",
 							"description": "",
 							"type": "text"
@@ -159,7 +147,7 @@
 							"type": "text"
 						},
 						{
-							"key": "pass_hash",
+							"key": "password",
 							"value": "test_hash",
 							"description": "",
 							"type": "text"
@@ -195,14 +183,14 @@
 							"type": "text"
 						},
 						{
-							"key": "title",
-							"value": "test_chat",
+							"key": "name",
+							"value": "test_chat2",
 							"description": "",
 							"type": "text"
 						},
 						{
 							"key": "location",
-							"value": "POINT(32.987286 -6.748288)",
+							"value": "POINT(33.987286 -6.748288)",
 							"description": "",
 							"type": "text"
 						},
@@ -244,7 +232,7 @@
 						},
 						{
 							"key": "chat_id",
-							"value": "fe9e5144-0a20-11e8-b993-f48e38f22fe0",
+							"value": "e11a089e-2a59-11e8-9ecb-f48e38f22fe0",
 							"description": "",
 							"type": "text"
 						},
@@ -300,6 +288,224 @@
 					"port": "8888",
 					"path": [
 						"get_nearby_chats"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "reset_all",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "localhost:8888/reset_all",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"reset_all"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "get_user_chats",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "api_key",
+							"value": "SecretKey",
+							"description": "",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:8888/get_user_chats",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"get_user_chats"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "set_enrollment",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "api_key",
+							"value": "SecretKey",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "chat_id",
+							"value": "e11a089e-2a59-11e8-9ecb-f48e38f22fe0",
+							"description": "",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:8888/set_enrollment",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"set_enrollment"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "set_moderator",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "api_key",
+							"value": "SecretKey",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "username",
+							"value": "test_user",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "chat_id",
+							"value": "e11a089e-2a59-11e8-9ecb-f48e38f22fe0",
+							"description": "",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:8888/set_moderator",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"set_moderator"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "set_banned",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "api_key",
+							"value": "SecretKey",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "banned",
+							"value": "True",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "username",
+							"value": "test_user",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "chat_id",
+							"value": "e11a089e-2a59-11e8-9ecb-f48e38f22fe0",
+							"description": "",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:8888/set_banned",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"set_banned"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "update_chat_name",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "api_key",
+							"value": "SecretKey",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "chat_id",
+							"value": "e11a089e-2a59-11e8-9ecb-f48e38f22fe0",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "name",
+							"value": "New chat name!",
+							"description": "",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:8888/update_chat_name",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"update_chat_name"
 					]
 				},
 				"description": ""
