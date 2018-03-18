@@ -41,7 +41,7 @@ class MySQLManager(DBManager):
                         CREATE TABLE IF NOT EXISTS chats (
                             chat_id VARCHAR(36),
                             start_date DATETIME,
-                            title VARCHAR(255),
+                            name VARCHAR(255),
                             location POINT NOT NULL,
                             description VARCHAR(255),
                             SPATIAL INDEX (location),
@@ -96,7 +96,6 @@ class MySQLManager(DBManager):
             self.connection.commit()
         self.initialize_database()
 
-
     # for login
     def get_user(self, username, password):
         with self.connection.cursor() as cursor:
@@ -133,7 +132,7 @@ class MySQLManager(DBManager):
     def get_nearby_chats(self, location):
 
         with self.connection.cursor() as cursor:
-            cursor.execute("""SELECT chat_id, title, description, 
+            cursor.execute("""SELECT chat_id, name, description, 
                 ST_X(location) AS "latitude",
                 ST_Y(location) AS "longitude",
                 (ST_Length(ST_GeometryFromWKB(ST_asWKB(LineString(location, ST_GeomFromText(%s)))))) AS distance
@@ -144,7 +143,7 @@ class MySQLManager(DBManager):
 
     def get_user_chats(self, username):
         with self.connection.cursor() as cursor:
-            cursor.execute("""SELECT chat_id, title, description, 
+            cursor.execute("""SELECT chat_id, name, description, 
                 ST_X(location) AS "latitude",
                 ST_Y(location) AS "longitude"
                 FROM chats
@@ -156,18 +155,18 @@ class MySQLManager(DBManager):
             return True, 'chats fetched', cursor.fetchall()
 
     # returns chat info, enrolls, last n messages
-    def get_chat(self, chatID, history=50):
+    def get_chat(self, chat_id, history=50):
         raise NotImplementedError
 
     # for new/edit chat
-    def set_chat(self, chatID=None, username=None, location=None, description=None):
+    def set_chat(self, chat_id=None, name=None, location=None, description=None):
         with self.connection.cursor() as cursor:
             # new chat
-            if not chatID:
+            if not chat_id:
                 cursor.execute("SELECT UUID()")
                 uuid = cursor.fetchone()[0]
 
-                data = (uuid, datetime.now(), username, location, description)
+                data = (uuid, datetime.now(), name, location, description)
 
                 cursor.execute("INSERT INTO chats VALUES (%s, %s, %s, ST_GeomFromText(%s), %s)", data)
 
@@ -177,11 +176,11 @@ class MySQLManager(DBManager):
                 # TODO: implement edit chat
                 pass
 
-    def new_message(self, chatID, username, message):
+    def new_message(self, chat_id, username, message):
 
         with self.connection.cursor() as cursor:
 
-            cursor.execute("SELECT banned FROM enrollments WHERE (chat_id, username)=(%s, %s)", (chatID, username))
+            cursor.execute("SELECT banned FROM enrollments WHERE (chat_id, username)=(%s, %s)", (chat_id, username))
             record = cursor.fetchone()
             if record is None:
                 return False, 'user is not a member of the chatroom'
@@ -190,47 +189,55 @@ class MySQLManager(DBManager):
                 return False, 'user is banned'
 
             cursor.execute("INSERT INTO messages VALUES (UUID(), %s, %s, %s, %s)",
-                           (chatID, username, datetime.now(), message))
+                           (chat_id, username, datetime.now(), message))
             self.connection.commit()
 
             return True, 'message added to database'
 
-    def set_enrollment(self, chatID, username, moderator=None, banned=None):
-
-        if moderator is True and banned is True:
-            return False, 'a user may not be a banned moderator'
-
+    def set_enrollment(self, chat_id, username, modded=False):
         with self.connection.cursor() as cursor:
 
-            cursor.execute("SELECT chat_id, username, moderator, banned FROM enrollments WHERE (chat_id, username)=(%s, %s)", (chatID, username))
-            record = cursor.fetchOne()
-            if record is not None:
-                _, _, currently_moderator, currently_banned = record[0]
+            cursor.execute("SELECT 1 FROM enrollments WHERE (chat_id, username)=(%s, %s)", (chat_id, username))
 
-                if currently_moderator is True and moderator is False:
-                    return False, 'a moderator may not be demoted'
+            if cursor.fetchone() is not None:
+                return False, 'user is already enrolled'
 
-                if currently_banned is True and moderator is True:
-                    return False, 'a banned user may not be a moderator'
-
-                if moderator is not None:
-                    cursor.execute("UPDATE enrollments SET moderator=%s WHERE (username, chat_id)=(%s, %s)",
-                                   (moderator, username, chatID))
-
-                if banned is not None:
-                    cursor.execute("UPDATE enrollments SET banned=%s WHERE (username, chat_id)=(%s, %s)",
-                                   (banned, username, chatID))
-
-                self.connection.commit()
-                return True, 'user enrollment updated'
-
-            if moderator is None:
-                moderator = False
-
-            if banned is None:
-                banned = False
-
-            cursor.execute("INSERT INTO enrollments VALUES (%s, %s, %s, %s)", (chatID, username, moderator, banned))
+            cursor.execute("INSERT INTO enrollments VALUES (%s, %s, %s, 0)", (chat_id, username, modded))
             self.connection.commit()
 
             return True, 'user added to chat'
+
+    def set_moderator(self, chat_id, moderator, username):
+        with self.connection.cursor() as cursor:
+
+            # check if moderator is a moderator
+            cursor.execute("SELECT moderator FROM enrollments WHERE (chat_id, username)=(%s, %s)", (chat_id, moderator))
+            if cursor.fetchone() is None:
+                return False, 'user has insufficient rights to set a moderator'
+
+            cursor.execute(
+                "UPDATE enrollments SET moderator=1, banned=0 WHERE (chat_id, username)=(%s, %s)", (chat_id, username))
+
+            self.connection.commit()
+            return True, 'user has been modded'
+
+    def set_banned(self, chat_id, moderator, username, status):
+        with self.connection.cursor() as cursor:
+
+            # check if moderator is a moderator
+            cursor.execute(
+                "SELECT 1 FROM enrollments WHERE (chat_id, username, moderator)=(%s, %s, 1)", (chat_id, moderator))
+            if cursor.fetchone() is None:
+                return False, 'user has insufficient rights to ban'
+
+            # check if user is a moderator
+            cursor.execute(
+                "SELECT 1 FROM enrollments WHERE (chat_id, username, moderator)=(%s, %s, 1)", (chat_id, username))
+            if cursor.fetchone() is not None:
+                return False, 'a moderator may not be banned'
+
+            cursor.execute(
+                "UPDATE enrollments SET banned=%s WHERE (chat_id, username)=(%s, %s)", (status, chat_id, username))
+
+            self.connection.commit()
+            return True, 'user ban has been changed'

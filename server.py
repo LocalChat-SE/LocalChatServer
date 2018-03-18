@@ -105,13 +105,14 @@ def new_chat():
         return json.dumps({'status': False, 'description': 'user is not logged in'})
 
     data = {
-        'chatID': None,
-        'username': request.values['title'],
+        'chat_id': None,
+        'name': request.values['name'],
         'location': request.values['location'],
         'description': request.values['description']
     }
 
     status, description, chat_id = database.set_chat(**data)
+    database.set_enrollment(chat_id, session['username'], modded=True)
 
     return json.dumps({
         'status': status,
@@ -143,8 +144,8 @@ def set_moderator():
     if 'username' not in session:
         return json.dumps({'status': False, 'description': 'user is not logged in'})
 
-    status, description = database.set_enrollment(
-        request.values['chat_id'], session['username'], moderator=request.values['moderator'])
+    status, description = database.set_moderator(
+        request.values['chat_id'], session['username'], request.values['username'])
 
     return json.dumps({'status': status, 'description': description})
 
@@ -158,8 +159,8 @@ def set_banned():
     if 'username' not in session:
         return json.dumps({'status': False, 'description': 'user is not logged in'})
 
-    status, description = database.set_enrollment(
-        request.values['chat_id'], session['username'], banned=request.values['banned'])
+    status, description = database.set_banned(
+        request.values['chat_id'], session['username'], request.values['username'], request.values['banned'])
 
     return json.dumps({'status': status, 'description': description})
 

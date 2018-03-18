@@ -22,15 +22,21 @@ class DBManager(object):
         raise NotImplementedError
 
     # returns chat info, enrolls, last n messages
-    def get_chat(self, chatID, history=50):
+    def get_chat(self, chat_id, history=50):
         raise NotImplementedError
 
     # modifies chat info
-    def set_chat(self, chatID=None, username=None, location=None, description=None):
+    def set_chat(self, chat_id=None, name=None, location=None, description=None):
         raise NotImplementedError
 
-    def new_message(self, chatID, username, message):
+    def new_message(self, chat_id, username, message):
         raise NotImplementedError
 
-    def set_enrollment(self, chatID, username, moderator=None, banned=None):
+    def set_enrollment(self, chat_id, username, modded=False):
+        raise NotImplementedError
+
+    def set_moderator(self, chat_id, moderator, username):
+        raise NotImplementedError
+
+    def set_banned(self, chat_id, moderator, username, status):
         raise NotImplementedError
