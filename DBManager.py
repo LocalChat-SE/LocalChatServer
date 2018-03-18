@@ -8,14 +8,17 @@ class DBManager(object):
             cls._instance = super(DBManager, cls).__new__(cls, *args, **kwargs)
         return cls._instance
 
-    def get_user(self, user, password):
+    def get_user(self, username, password):
         raise NotImplementedError
 
     # for creating a new user
-    def set_user(self, user, password):
+    def set_user(self, username, password):
         raise NotImplementedError
 
-    def get_chats(self, lat, lon):
+    def get_nearby_chats(self, location):
+        raise NotImplementedError
+
+    def get_user_chats(self, username):
         raise NotImplementedError
 
     # returns chat info, enrolls, last n messages
@@ -23,11 +26,11 @@ class DBManager(object):
         raise NotImplementedError
 
     # modifies chat info
-    def set_chat(self, chatID, name=None, lat=None, lon=None, description=None):
+    def set_chat(self, chatID=None, username=None, location=None, description=None):
         raise NotImplementedError
 
-    def receive_message(self, userID, chatID, message):
+    def new_message(self, chatID, username, message):
         raise NotImplementedError
 
-    def set_enrollment(self, userID, chatID, isModerator=None, isBanned=None):
+    def set_enrollment(self, chatID, username, moderator=None, banned=None):
         raise NotImplementedError
