@@ -214,7 +214,6 @@ def get_nearby_chats():
     if request.values['api_key'] != api_key:
         return json.dumps({'status': False, 'description': 'invalid api key'})
 
-    # If user is specified, then it will only return chats for that user
     status, description, chats = database.get_nearby_chats(request.values['location'])
 
     return json.dumps({
@@ -233,13 +232,31 @@ def get_user_chats():
     if 'username' not in session:
         return json.dumps({'status': False, 'description': 'user is not logged in'})
 
-    # If user is specified, then it will only return chats for that user
     status, description, chats = database.get_user_chats(session['username'])
 
     return json.dumps({
         'status': status,
         'description': description,
         'data': chats
+    })
+
+
+@app.route('/get_chat', methods=['POST'])
+def get_chat():
+    # Ensure key is valid
+    if request.values['api_key'] != api_key:
+        return json.dumps({'status': False, 'description': 'invalid api key'})
+
+    if 'username' not in session:
+        return json.dumps({'status': False, 'description': 'user is not logged in'})
+
+    status, description, data = database.get_chat(
+        request.values['chat_id'], session['username'], request.values['limit'], request.values['offset'])
+
+    return json.dumps({
+        'status': status,
+        'description': description,
+        'data': data
     })
 
 

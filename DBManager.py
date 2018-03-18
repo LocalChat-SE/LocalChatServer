@@ -22,7 +22,7 @@ class DBManager(object):
         raise NotImplementedError
 
     # returns chat info, enrolls, last n messages
-    def get_chat(self, chat_id, history=50):
+    def get_chat(self, chat_id, username, limit=50, offset=0):
         raise NotImplementedError
 
     # modifies chat info

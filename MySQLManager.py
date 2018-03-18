@@ -157,8 +157,53 @@ class MySQLManager(DBManager):
             return True, 'chats fetched', cursor.fetchall()
 
     # returns chat info, enrolls, last n messages
-    def get_chat(self, chat_id, history=50):
-        raise NotImplementedError
+    def get_chat(self, chat_id, username, limit=50, offset=0):
+        with self.connection.cursor() as cursor:
+
+            # user must be a non-banned member
+            cursor.execute("SELECT banned FROM enrollments WHERE (chat_id, username)=(%s, %s)", (chat_id, username))
+            record = cursor.fetchone()
+            if record is None:
+                return False, 'user is not a member of the chatroom'
+
+            if record[0][0]:
+                return False, 'user is banned'
+
+            # collect chat information
+            cursor.execute("""SELECT name, description, start_date,
+                ST_X(location) AS "latitude", 
+                ST_Y(location) AS "longitude" 
+                FROM chats WHERE chat_id=%s""", [chat_id])
+            record = cursor.fetchone()
+            chat = {
+                'name': record[0],
+                'description': record[1],
+                'start_date': str(record[2].now()),
+                'latitude': record[3],
+                'longitude': record[4]
+            }
+
+            cursor.execute('SELECT username, moderator, banned FROM enrollments WHERE chat_id=%s', [chat_id])
+
+            # decode into a serializable object
+            users = {user: {'moderator': bool(ord(mod)), 'banned': bool(ord(ban))}
+                     for user, mod, ban in cursor.fetchall()}
+
+            cursor.execute("""
+                SELECT message_id, username, send_date, value 
+                FROM messages 
+                WHERE chat_id=%s 
+                ORDER BY send_date""", (chat_id))
+
+            # decode into serializable object
+            messages = [{'id': mesg_id, 'user': user, 'time': str(time.now()), 'value': mesg}
+                        for mesg_id, user, time, mesg in cursor.fetchall()]
+
+            return True, 'chat collected', {
+                'chat': chat,
+                'users': users,
+                'messages': messages
+            }
 
     # for new chat
     def set_chat(self, name, location, description):
@@ -258,7 +303,7 @@ class MySQLManager(DBManager):
 
             cursor.execute(
                 "UPDATE enrollments SET banned=%s WHERE (chat_id, username)=(%s, %s)",
-                (bool(status), chat_id, username))
+                (int(status.lower() == 'true'), chat_id, username))
 
             self.connection.commit()
             return True, 'user ban has been set/unset'

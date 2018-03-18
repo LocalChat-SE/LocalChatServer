@@ -511,6 +511,60 @@
 				"description": ""
 			},
 			"response": []
+		},
+		{
+			"name": "get_chat",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "api_key",
+							"value": "SecretKey",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "username",
+							"value": "test_user",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "chat_id",
+							"value": "e11a089e-2a59-11e8-9ecb-f48e38f22fe0",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "offset",
+							"value": "0",
+							"description": "",
+							"type": "text"
+						},
+						{
+							"key": "limit",
+							"value": "50",
+							"description": "",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "localhost:8888/get_chat",
+					"host": [
+						"localhost"
+					],
+					"port": "8888",
+					"path": [
+						"get_chat"
+					]
+				},
+				"description": ""
+			},
+			"response": []
 		}
 	]
 }
