@@ -120,12 +120,14 @@ class MySQLManager(DBManager):
 
     def delete_user(self, username, password):
         with self.connection.cursor() as cursor:
-            cursor.execute("SELECT 1 FROM users WHERE username=%s AND password=%s", (username, password))
+            print(username)
+            cursor.execute("SELECT 1 FROM users WHERE (username, password) = (%s, %s)", (username, password))
             if cursor.fetchone() is None:
-                return False, 'user does not exist'
+                return False, 'credentials do not match'
 
             else:
-                cursor.execute("DELETE FROM users WHERE username=%s AND password=%s", (username, password))
+                cursor.execute("DELETE FROM enrollments WHERE username=%s", [username])
+                cursor.execute("DELETE FROM users WHERE username=%s", [username])
                 self.connection.commit()
                 return True, 'user removed from database'
 
@@ -211,7 +213,10 @@ class MySQLManager(DBManager):
         with self.connection.cursor() as cursor:
 
             # check if moderator is a moderator
-            cursor.execute("SELECT moderator FROM enrollments WHERE (chat_id, username)=(%s, %s)", (chat_id, moderator))
+            cursor.execute(
+                "SELECT moderator FROM enrollments WHERE (chat_id, username, moderator)=(%s, %s, 1)",
+                (chat_id, moderator))
+
             if cursor.fetchone() is None:
                 return False, 'user has insufficient rights to set a moderator'
 
@@ -237,7 +242,7 @@ class MySQLManager(DBManager):
                 return False, 'a moderator may not be banned'
 
             cursor.execute(
-                "UPDATE enrollments SET banned=%s WHERE (chat_id, username)=(%s, %s)", (status, chat_id, username))
+                "UPDATE enrollments SET banned=%s WHERE (chat_id, username)=(%s, %s)", (bool(status), chat_id, username))
 
             self.connection.commit()
-            return True, 'user ban has been changed'
+            return True, 'user ban has been set/unset'
