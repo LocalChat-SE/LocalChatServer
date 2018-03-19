@@ -193,7 +193,7 @@ class MySQLManager(DBManager):
                 SELECT message_id, username, send_date, value 
                 FROM messages 
                 WHERE chat_id=%s 
-                ORDER BY send_date""", (chat_id))
+                ORDER BY send_date""", (chat_id,))
 
             # decode into serializable object
             messages = [{'id': mesg_id, 'user': user, 'time': str(time.now()), 'value': mesg}
