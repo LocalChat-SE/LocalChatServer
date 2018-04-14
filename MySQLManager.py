@@ -225,8 +225,12 @@ class MySQLManager(DBManager):
             data = (uuid, datetime.now(), name, location, description)
 
             cursor.execute("INSERT INTO chats VALUES (%s, %s, %s, ST_GeomFromText(%s), %s)", data)
-
-            return True, 'new chat added', uuid
+            
+            return True, 'new chat added', {
+                'chat_id': uuid,
+                'name': name,
+                'description': description
+            }
 
     # for edit chat
     def update_chat(self, chat_id, username, name=None, location=None, description=None):
