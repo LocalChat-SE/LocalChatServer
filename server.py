@@ -29,10 +29,11 @@ with open('api_key.txt', 'r') as keyfile:
 
 # read from the request arguments if the body is undefined.
 def parse_request():
-    body = request.get_data()
-    if body == '':
+    body = request.get_data().decode('utf-8')
+    try:
+        return json.loads(body)
+    except ValueError:
         return request.values
-    return json.load(body)
 
 
 # For debugging only
@@ -54,7 +55,7 @@ def login():
     data = parse_request()
 
     # Ensure key is valid
-    if request.values['api_key'] != api_key:
+    if data['api_key'] != api_key:
         return json.dumps({'status': False, 'description': 'invalid api key'})
 
     if 'username' in session:
@@ -70,8 +71,10 @@ def login():
 
 @app.route('/logout', methods=['POST'])
 def logout():
+    data = parse_request()
+
     # Ensure key is valid
-    if request.values['api_key'] != api_key:
+    if data['api_key'] != api_key:
         return json.dumps({'status': False, 'description': 'invalid api key'})
 
     if 'username' not in session:
@@ -83,11 +86,13 @@ def logout():
 
 @app.route('/new_user', methods=['POST'])
 def new_user():
+    data = parse_request()
+
     # Ensure key is valid
-    if request.values['api_key'] != api_key:
+    if data['api_key'] != api_key:
         return json.dumps({'status': False, 'description': 'invalid api key'})
 
-    status, description = database.set_user(request.values['username'], request.values['password'])
+    status, description = database.set_user(data['username'], data['password'])
 
     # Convert to json string and return
     return json.dumps({'status': status, 'description': description})
@@ -95,14 +100,16 @@ def new_user():
 
 @app.route('/delete_user', methods=['POST'])
 def delete_user():
+    req_data = parse_request()
+
     # Ensure key is valid
-    if request.values['api_key'] != api_key:
+    if req_data['api_key'] != api_key:
         return json.dumps({'status': False, 'description': 'invalid api key'})
 
     if 'username' not in session:
         return json.dumps({'status': False, 'description': 'user is not logged in'})
 
-    status, description = database.delete_user(session['username'], request.values['password'])
+    status, description = database.delete_user(session['username'], req_data['password'])
 
     # Convert to json string and return
     return json.dumps({'status': status, 'description': description})
@@ -110,14 +117,16 @@ def delete_user():
 
 @app.route('/new_chat', methods=['POST'])
 def new_chat():
+    req_data = parse_request()
+
     # Ensure key is valid
-    if request.values['api_key'] != api_key:
+    if req_data['api_key'] != api_key:
         return json.dumps({'status': False, 'description': 'invalid api key'})
 
     if 'username' not in session:
         return json.dumps({'status': False, 'description': 'user is not logged in'})
 
-    data = (request.values['name'], request.values['location'], request.values['description'])
+    data = (req_data['name'], req_data['location'], req_data['description'])
 
     status, description, chat_id = database.set_chat(*data)
     database.set_enrollment(chat_id, session['username'], modded=True)
@@ -131,100 +140,114 @@ def new_chat():
 
 @app.route('/update_chat_name', methods=['POST'])
 def update_chat_name():
+    req_data = parse_request()
+
     # Ensure key is valid
-    if request.values['api_key'] != api_key:
+    if req_data['api_key'] != api_key:
         return json.dumps({'status': False, 'description': 'invalid api key'})
 
     if 'username' not in session:
         return json.dumps({'status': False, 'description': 'user is not logged in'})
 
     status, description = database.update_chat(
-        request.values['chat_id'], session['username'], name=request.values['name'])
+        req_data['chat_id'], session['username'], name=req_data['name'])
 
     return json.dumps({'status': status, 'description': description})
 
 
 @app.route('/update_chat_location', methods=['POST'])
 def update_chat_location():
+    req_data = parse_request()
+
     # Ensure key is valid
-    if request.values['api_key'] != api_key:
+    if req_data['api_key'] != api_key:
         return json.dumps({'status': False, 'description': 'invalid api key'})
 
     if 'username' not in session:
         return json.dumps({'status': False, 'description': 'user is not logged in'})
 
     status, description = database.update_chat(
-        request.values['chat_id'], session['name'], location=request.values['location'])
+        req_data['chat_id'], session['name'], location=req_data['location'])
 
     return json.dumps({'status': status, 'description': description})
 
 
 @app.route('/update_chat_description', methods=['POST'])
 def update_chat_description():
+    req_data = parse_request()
+
     # Ensure key is valid
-    if request.values['api_key'] != api_key:
+    if req_data['api_key'] != api_key:
         return json.dumps({'status': False, 'description': 'invalid api key'})
 
     if 'username' not in session:
         return json.dumps({'status': False, 'description': 'user is not logged in'})
 
     status, description = database.update_chat(
-        request.values['chat_id'], session['name'], description=request.values['description'])
+        req_data['chat_id'], session['name'], description=req_data['description'])
 
     return json.dumps({'status': status, 'description': description})
 
 
 @app.route('/set_enrollment', methods=['POST'])
 def set_enrollment():
+    req_data = parse_request()
+
     # Ensure key is valid
-    if request.values['api_key'] != api_key:
+    if req_data['api_key'] != api_key:
         return json.dumps({'status': False, 'description': 'invalid api key'})
 
     if 'username' not in session:
         return json.dumps({'status': False, 'description': 'user is not logged in'})
 
-    status, description = database.set_enrollment(request.values['chat_id'], session['username'])
+    status, description = database.set_enrollment(req_data['chat_id'], session['username'])
 
     return json.dumps({'status': status, 'description': description})
 
 
 @app.route('/set_moderator', methods=['POST'])
 def set_moderator():
+    req_data = parse_request()
+
     # Ensure key is valid
-    if request.values['api_key'] != api_key:
+    if req_data['api_key'] != api_key:
         return json.dumps({'status': False, 'description': 'invalid api key'})
 
     if 'username' not in session:
         return json.dumps({'status': False, 'description': 'user is not logged in'})
 
     status, description = database.set_moderator(
-        request.values['chat_id'], session['username'], request.values['username'])
+        req_data['chat_id'], session['username'], req_data['username'])
 
     return json.dumps({'status': status, 'description': description})
 
 
 @app.route('/set_banned', methods=['POST'])
 def set_banned():
+    req_data = parse_request()
+
     # Ensure key is valid
-    if request.values['api_key'] != api_key:
+    if req_data['api_key'] != api_key:
         return json.dumps({'status': False, 'description': 'invalid api key'})
 
     if 'username' not in session:
         return json.dumps({'status': False, 'description': 'user is not logged in'})
 
     status, description = database.set_banned(
-        request.values['chat_id'], session['username'], request.values['username'], request.values['banned'])
+        req_data['chat_id'], session['username'], req_data['username'], req_data['banned'])
 
     return json.dumps({'status': status, 'description': description})
 
 
 @app.route('/get_nearby_chats', methods=['POST'])
 def get_nearby_chats():
+    req_data = parse_request()
+
     # Ensure key is valid
-    if request.values['api_key'] != api_key:
+    if req_data['api_key'] != api_key:
         return json.dumps({'status': False, 'description': 'invalid api key'})
 
-    status, description, chats = database.get_nearby_chats(request.values['location'])
+    status, description, chats = database.get_nearby_chats(req_data['location'])
 
     return json.dumps({
         'status': status,
@@ -235,8 +258,10 @@ def get_nearby_chats():
 
 @app.route('/get_user_chats', methods=['POST'])
 def get_user_chats():
+    req_data = parse_request()
+
     # Ensure key is valid
-    if request.values['api_key'] != api_key:
+    if req_data['api_key'] != api_key:
         return json.dumps({'status': False, 'description': 'invalid api key'})
 
     if 'username' not in session:
@@ -253,15 +278,16 @@ def get_user_chats():
 
 @app.route('/get_chat', methods=['POST'])
 def get_chat():
+    req_data = parse_request()
     # Ensure key is valid
-    if request.values['api_key'] != api_key:
+    if req_data['api_key'] != api_key:
         return json.dumps({'status': False, 'description': 'invalid api key'})
 
     if 'username' not in session:
         return json.dumps({'status': False, 'description': 'user is not logged in'})
 
     status, description, data = database.get_chat(
-        request.values['chat_id'], session['username'], request.values['limit'], request.values['offset'])
+        req_data['chat_id'], session['username'], req_data['limit'], req_data['offset'])
 
     return json.dumps({
         'status': status,
@@ -272,14 +298,16 @@ def get_chat():
 
 @app.route('/new_message', methods=['POST'])
 def new_message():
+    req_data = parse_request()
+
     # Ensure key is valid
-    if request.values['api_key'] != api_key:
+    if req_data['api_key'] != api_key:
         return json.dumps({'status': False, 'description': 'invalid api key'})
 
     if 'username' not in session:
         return json.dumps({'status': False, 'description': 'user is not logged in'})
 
-    data = (request.values['chat_id'], session['username'], request.values['value'])
+    data = (req_data['chat_id'], session['username'], req_data['value'])
     status, description = database.new_message(*data)
 
     return json.dumps({'status': status, 'description': description})
