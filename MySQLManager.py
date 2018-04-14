@@ -134,7 +134,11 @@ class MySQLManager(DBManager):
                 FROM chats 
                 ORDER BY distance ASC;""", [location])
 
-            return True, 'chats fetched', cursor.fetchall()
+            labels = ['chat_id', 'name', 'description', 'latitude', 'longitude', 'distance']
+            chats = [{labels[idx]: field for idx, field in enumerate(record)}
+                     for record in cursor.fetchall()]
+
+            return True, 'chats fetched', chats
 
     def get_user_chats(self, username):
         with pymysql.connect(**config) as cursor:
@@ -147,7 +151,11 @@ class MySQLManager(DBManager):
                     FROM enrollments
                     WHERE username=%s)
                 """, [username])
-            return True, 'chats fetched', cursor.fetchall()
+
+            labels = ['chat_id', 'name', 'description', 'latitude', 'longitude']
+            chats = [{labels[idx]: field for idx, field in enumerate(record)}
+                     for record in cursor.fetchall()]
+            return True, 'chats fetched', chats
 
     # returns chat info, enrolls, last n messages
     def get_chat(self, chat_id, username, limit=50, offset=0):
