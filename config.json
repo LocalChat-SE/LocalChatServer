@@ -1,9 +1,9 @@
 {
   "type": "MySQL",
 
-  "hostname": "localhost",
-  "username": "LocalChat",
-  "password": "0rZv5#VA",
-  "database": "localchat",
+  "host": "localhost",
+  "user": "LocalChat",
+  "passwd": "0rZv5#VA",
+  "db": "localchat",
   "port": 33060
 }
