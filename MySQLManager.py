@@ -170,7 +170,7 @@ class MySQLManager(DBManager):
             if record[0][0]:
                 return False, 'user is banned'
 
-            # collect chat information
+            # CHAT
             cursor.execute("""SELECT name, description, start_date,
                 ST_X(location) AS "latitude", 
                 ST_Y(location) AS "longitude" 
@@ -184,26 +184,37 @@ class MySQLManager(DBManager):
                 'longitude': record[4]
             }
 
+            # USERS
             cursor.execute('SELECT username, moderator, banned FROM enrollments WHERE chat_id=%s', [chat_id])
 
-            # decode into a serializable object
             users = {user: {'moderator': bool(ord(mod)), 'banned': bool(ord(ban))}
                      for user, mod, ban in cursor.fetchall()}
 
+            # MESSAGES
             cursor.execute("""
                 SELECT message_id, username, send_date, value 
                 FROM messages 
                 WHERE chat_id=%s 
                 ORDER BY send_date""", (chat_id,))
 
-            # decode into serializable object
             messages = [{'id': mesg_id, 'user': user, 'time': str(time.now()), 'value': mesg}
                         for mesg_id, user, time, mesg in cursor.fetchall()]
+
+            # ENROLLMENTS
+            cursor.execute("""
+                SELECT user_id, moderator, banned
+                FROM enrollments
+                WHERE chat_id=%s""", (chat_id,))
+
+            labels = ['user_id', 'moderator', 'banned']
+            enrollments = [{labels[idx]: field for idx, field in enumerate(record)}
+                           for record in cursor.fetchall()]
 
             return True, 'chat collected', {
                 **chat,
                 'users': users,
-                'messages': messages
+                'messages': messages,
+                'enrollments': enrollments
             }
 
     # for new chat
