@@ -201,7 +201,7 @@ class MySQLManager(DBManager):
                         for mesg_id, user, time, mesg in cursor.fetchall()]
 
             return True, 'chat collected', {
-                'chat': chat,
+                **chat,
                 'users': users,
                 'messages': messages
             }
