@@ -13,17 +13,13 @@ config = json.load(open('./config.json', 'r'))
 
 
 class MySQLManager(DBManager):
+
     def __init__(self):
+        MySQLManager.initialize_database()
 
-        self.connection = pymysql.connect(
-            host=config['hostname'],
-            user=config['username'],
-            passwd=config['password'])
-
-        self.initialize_database()
-
-    def initialize_database(self):
-        with self.connection.cursor() as cursor:
+    @staticmethod
+    def initialize_database():
+        with pymysql.connect(**config) as cursor:
 
             # cursor.execute("DROP DATABASE " + database)
             cursor.execute("CREATE DATABASE IF NOT EXISTS " + config['database'])
@@ -71,11 +67,9 @@ class MySQLManager(DBManager):
                             FOREIGN KEY (username) REFERENCES users(username)
                         )''')
 
-            self.connection.commit()
-
     # for debugging
     def get_all(self):
-        with self.connection.cursor() as cursor:
+        with pymysql.connect(**config) as cursor:
             cursor.execute('SELECT * FROM users')
             users = cursor.fetchall()
 
@@ -91,14 +85,13 @@ class MySQLManager(DBManager):
             return users, chats, messages, enrolls
 
     def reset_all(self):
-        with self.connection.cursor() as cursor:
+        with pymysql.connect(**config) as cursor:
             cursor.execute('DROP DATABASE ' + config['database'])
-            self.connection.commit()
         self.initialize_database()
 
     # for login
     def get_user(self, username, password):
-        with self.connection.cursor() as cursor:
+        with pymysql.connect(**config) as cursor:
             cursor.execute("SELECT username FROM users WHERE username=%s AND password=%s", (username, password))
             if cursor.fetchone():
                 return True, 'logged in'
@@ -106,7 +99,7 @@ class MySQLManager(DBManager):
 
     # for new user
     def set_user(self, username, password):
-        with self.connection.cursor() as cursor:
+        with pymysql.connect(**config) as cursor:
 
             cursor.execute("SELECT 1 FROM users WHERE username=%s", [username])
             if cursor.fetchone() is not None:
@@ -115,11 +108,10 @@ class MySQLManager(DBManager):
             else:
                 data = (username, password, datetime.now())
                 cursor.execute("INSERT INTO users VALUES (%s, %s, %s)", data)
-                self.connection.commit()
                 return True, 'user added to database'
 
     def delete_user(self, username, password):
-        with self.connection.cursor() as cursor:
+        with pymysql.connect(**config) as cursor:
             print(username)
             cursor.execute("SELECT 1 FROM users WHERE (username, password) = (%s, %s)", (username, password))
             if cursor.fetchone() is None:
@@ -128,12 +120,11 @@ class MySQLManager(DBManager):
             else:
                 cursor.execute("DELETE FROM enrollments WHERE username=%s", [username])
                 cursor.execute("DELETE FROM users WHERE username=%s", [username])
-                self.connection.commit()
                 return True, 'user removed from database'
 
     def get_nearby_chats(self, location):
 
-        with self.connection.cursor() as cursor:
+        with pymysql.connect(**config) as cursor:
             cursor.execute("""SELECT chat_id, name, description, 
                 ST_X(location) AS "latitude",
                 ST_Y(location) AS "longitude",
@@ -144,7 +135,7 @@ class MySQLManager(DBManager):
             return True, 'chats fetched', cursor.fetchall()
 
     def get_user_chats(self, username):
-        with self.connection.cursor() as cursor:
+        with pymysql.connect(**config) as cursor:
             cursor.execute("""SELECT chat_id, name, description, 
                 ST_X(location) AS "latitude",
                 ST_Y(location) AS "longitude"
@@ -158,7 +149,7 @@ class MySQLManager(DBManager):
 
     # returns chat info, enrolls, last n messages
     def get_chat(self, chat_id, username, limit=50, offset=0):
-        with self.connection.cursor() as cursor:
+        with pymysql.connect(**config) as cursor:
 
             # user must be a non-banned member
             cursor.execute("SELECT banned FROM enrollments WHERE (chat_id, username)=(%s, %s)", (chat_id, username))
@@ -207,7 +198,7 @@ class MySQLManager(DBManager):
 
     # for new chat
     def set_chat(self, name, location, description):
-        with self.connection.cursor() as cursor:
+        with pymysql.connect(**config) as cursor:
             cursor.execute("SELECT UUID()")
             uuid = cursor.fetchone()[0]
 
@@ -215,12 +206,11 @@ class MySQLManager(DBManager):
 
             cursor.execute("INSERT INTO chats VALUES (%s, %s, %s, ST_GeomFromText(%s), %s)", data)
 
-            self.connection.commit()
             return True, 'new chat added', uuid
 
     # for edit chat
     def update_chat(self, chat_id, username, name=None, location=None, description=None):
-        with self.connection.cursor() as cursor:
+        with pymysql.connect(**config) as cursor:
             # check if user is a moderator
             cursor.execute(
                 "SELECT 1 FROM enrollments WHERE (chat_id, username, moderator)=(%s, %s, 1)", (chat_id, username))
@@ -240,7 +230,7 @@ class MySQLManager(DBManager):
 
     def new_message(self, chat_id, username, message):
 
-        with self.connection.cursor() as cursor:
+        with pymysql.connect(**config) as cursor:
 
             cursor.execute("SELECT banned FROM enrollments WHERE (chat_id, username)=(%s, %s)", (chat_id, username))
             record = cursor.fetchone()
@@ -252,12 +242,11 @@ class MySQLManager(DBManager):
 
             cursor.execute("INSERT INTO messages VALUES (UUID(), %s, %s, %s, %s)",
                            (chat_id, username, datetime.now(), message))
-            self.connection.commit()
 
             return True, 'message added to database'
 
     def set_enrollment(self, chat_id, username, modded=False):
-        with self.connection.cursor() as cursor:
+        with pymysql.connect(**config) as cursor:
 
             cursor.execute("SELECT 1 FROM enrollments WHERE (chat_id, username)=(%s, %s)", (chat_id, username))
 
@@ -265,12 +254,11 @@ class MySQLManager(DBManager):
                 return False, 'user is already enrolled'
 
             cursor.execute("INSERT INTO enrollments VALUES (%s, %s, %s, 0)", (chat_id, username, modded))
-            self.connection.commit()
 
             return True, 'user added to chat'
 
     def set_moderator(self, chat_id, moderator, username):
-        with self.connection.cursor() as cursor:
+        with pymysql.connect(**config) as cursor:
 
             # check if moderator is a moderator
             cursor.execute(
@@ -283,11 +271,10 @@ class MySQLManager(DBManager):
             cursor.execute(
                 "UPDATE enrollments SET moderator=1, banned=0 WHERE (chat_id, username)=(%s, %s)", (chat_id, username))
 
-            self.connection.commit()
             return True, 'user has been modded'
 
     def set_banned(self, chat_id, moderator, username, status):
-        with self.connection.cursor() as cursor:
+        with pymysql.connect(**config) as cursor:
 
             # check if moderator is a moderator
             cursor.execute(
@@ -305,5 +292,4 @@ class MySQLManager(DBManager):
                 "UPDATE enrollments SET banned=%s WHERE (chat_id, username)=(%s, %s)",
                 (int(status.lower() == 'true'), chat_id, username))
 
-            self.connection.commit()
             return True, 'user ban has been set/unset'
