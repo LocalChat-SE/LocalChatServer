@@ -184,11 +184,11 @@ class MySQLManager(DBManager):
                 'longitude': record[4]
             }
 
-            # USERS
-            cursor.execute('SELECT username, moderator, banned FROM enrollments WHERE chat_id=%s', [chat_id])
-
-            users = {user: {'moderator': bool(ord(mod)), 'banned': bool(ord(ban))}
-                     for user, mod, ban in cursor.fetchall()}
+            # USERS (not necessary)
+            # cursor.execute('SELECT username, moderator, banned FROM enrollments WHERE chat_id=%s', [chat_id])
+            #
+            # users = {user: {'moderator': bool(ord(mod)), 'banned': bool(ord(ban))}
+            #          for user, mod, ban in cursor.fetchall()}
 
             # MESSAGES
             cursor.execute("""
@@ -197,22 +197,21 @@ class MySQLManager(DBManager):
                 WHERE chat_id=%s 
                 ORDER BY send_date""", (chat_id,))
 
-            messages = [{'id': mesg_id, 'user': user, 'time': str(time.now()), 'value': mesg}
+            messages = [{'id': mesg_id, 'username': user, 'time': str(time.now()), 'value': mesg}
                         for mesg_id, user, time, mesg in cursor.fetchall()]
 
             # ENROLLMENTS
             cursor.execute("""
-                SELECT user_id, moderator, banned
+                SELECT username, moderator, banned
                 FROM enrollments
                 WHERE chat_id=%s""", (chat_id,))
 
-            labels = ['user_id', 'moderator', 'banned']
+            labels = ['username', 'moderator', 'banned']
             enrollments = [{labels[idx]: field for idx, field in enumerate(record)}
                            for record in cursor.fetchall()]
 
             return True, 'chat collected', {
                 **chat,
-                'users': users,
                 'messages': messages,
                 'enrollments': enrollments
             }
