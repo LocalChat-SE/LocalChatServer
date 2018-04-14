@@ -10,6 +10,8 @@ warnings.filterwarnings('ignore', '.*1050.*')
 warnings.filterwarnings('ignore', '.*1007.*')
 
 config = json.load(open('./config.json', 'r'))
+del config['type']
+del config['port']
 
 
 class MySQLManager(DBManager):
@@ -22,8 +24,8 @@ class MySQLManager(DBManager):
         with pymysql.connect(**config) as cursor:
 
             # cursor.execute("DROP DATABASE " + database)
-            cursor.execute("CREATE DATABASE IF NOT EXISTS " + config['database'])
-            cursor.execute("USE " + config['database'])
+            cursor.execute("CREATE DATABASE IF NOT EXISTS " + config['db'])
+            cursor.execute("USE " + config['db'])
 
             cursor.execute('''
                         CREATE TABLE IF NOT EXISTS users (
