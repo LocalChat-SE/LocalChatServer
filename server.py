@@ -27,6 +27,14 @@ with open('api_key.txt', 'r') as keyfile:
 # Unfortunately, flask seems to be checking string literal function names for repeats.
 
 
+# read from the request arguments if the body is undefined.
+def parse_request():
+    body = request.get_data()
+    if body == '':
+        return request.values
+    return json.load(body)
+
+
 # For debugging only
 @app.route("/")
 def index():
@@ -43,6 +51,8 @@ def reset_all():
 
 @app.route('/login', methods=['POST'])
 def login():
+    data = parse_request()
+
     # Ensure key is valid
     if request.values['api_key'] != api_key:
         return json.dumps({'status': False, 'description': 'invalid api key'})
@@ -50,10 +60,10 @@ def login():
     if 'username' in session:
         return json.dumps({'status': True, 'description': 'user already logged into server'})
 
-    status, description = database.get_user(request.values['username'], request.values['password'])
+    status, description = database.get_user(data['username'], data['password'])
 
     if status:
-        session['username'] = request.values['username']
+        session['username'] = data['username']
 
     return json.dumps({'status': status, 'description': description})
 
@@ -273,6 +283,12 @@ def new_message():
     status, description = database.new_message(*data)
 
     return json.dumps({'status': status, 'description': description})
+
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 
 if __name__ == '__main__':
