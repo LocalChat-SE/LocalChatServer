@@ -128,13 +128,13 @@ def new_chat():
 
     data = (req_data['name'], req_data['location'], req_data['description'])
 
-    status, description, chat_id = database.set_chat(*data)
-    database.set_enrollment(chat_id, session['username'], modded=True)
+    status, description, db_data = database.set_chat(*data)
+    database.set_enrollment(db_data['chat_id'], session['username'], modded=True)
 
     return json.dumps({
         'status': status,
         'description': description,
-        'data': {'chat_id': chat_id}
+        'data': db_data
     })
 
 
