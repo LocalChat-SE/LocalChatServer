@@ -21,7 +21,9 @@ class MySQLManager(DBManager):
 
     @staticmethod
     def initialize_database():
-        with pymysql.connect(**config) as cursor:
+        config_copy = dict(config)
+        del config_copy['db']
+        with pymysql.connect(**config_copy) as cursor:
 
             # cursor.execute("DROP DATABASE " + database)
             cursor.execute("CREATE DATABASE IF NOT EXISTS " + config['db'])
@@ -88,7 +90,7 @@ class MySQLManager(DBManager):
 
     def reset_all(self):
         with pymysql.connect(**config) as cursor:
-            cursor.execute('DROP DATABASE ' + config['database'])
+            cursor.execute('DROP DATABASE ' + config['db'])
         self.initialize_database()
 
     # for login
