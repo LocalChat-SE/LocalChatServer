@@ -196,14 +196,14 @@ class MySQLManager(DBManager):
                 cursor.execute("""
                     SELECT message_id, username, send_date, value
                     FROM messages
-                    WHERE chat_id=%s AND send_date>=%s
-                    ORDER BY send_date""", (chat_id, time))
+                    WHERE chat_id=%s
+                    ORDER BY send_date""", (chat_id,))
             else:
                 cursor.execute("""
                     SELECT message_id, username, send_date, value
                     FROM messages
-                    WHERE chat_id=%s
-                    ORDER BY send_date""", (chat_id,))
+                    WHERE chat_id=%s AND send_date>=%s
+                    ORDER BY send_date""", (chat_id, time))
 
             messages = [{'id': mesg_id, 'username': user, 'time': str(time.now()), 'value': mesg}
                         for mesg_id, user, time, mesg in cursor.fetchall()]
