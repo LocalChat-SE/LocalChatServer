@@ -165,10 +165,10 @@ class MySQLManager(DBManager):
             cursor.execute("SELECT banned FROM enrollments WHERE (chat_id, username)=(%s, %s)", (chat_id, username))
             record = cursor.fetchone()
             if record is None:
-                return False, 'user is not a member of the chatroom'
+                return False, 'user is not a member of the chatroom', {}
 
             if record[0][0]:
-                return False, 'user is banned'
+                return False, 'user is banned', {}
 
             # CHAT
             cursor.execute("""SELECT name, description, start_date,

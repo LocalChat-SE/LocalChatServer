@@ -286,6 +286,9 @@ def get_chat():
     if 'username' not in session:
         return json.dumps({'status': False, 'description': 'user is not logged in'})
 
+    # ensure the user is enrolled
+    set_enrollment()
+
     timestamp = None if req_data['time'] == '' else req_data['time']
 
     status, description, data = database.get_chat(
