@@ -189,7 +189,7 @@ def update_chat_description():
     return json.dumps({'status': status, 'description': description})
 
 
-@app.route('/update_chat_description', methods=['POST'])
+@app.route('/delete_chat', methods=['POST'])
 def delete_chat():
     req_data = parse_request()
 
