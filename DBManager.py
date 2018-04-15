@@ -32,6 +32,9 @@ class DBManager(object):
     def update_chat(self, chat_id, username, name=None, location=None, description=None):
         raise NotImplementedError
 
+    def delete_chat(self, chat_id, username):
+        raise NotImplementedError
+
     def new_message(self, chat_id, username, message):
         raise NotImplementedError
 

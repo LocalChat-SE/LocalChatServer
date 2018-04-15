@@ -189,6 +189,22 @@ def update_chat_description():
     return json.dumps({'status': status, 'description': description})
 
 
+@app.route('/update_chat_description', methods=['POST'])
+def delete_chat():
+    req_data = parse_request()
+
+    # Ensure key is valid
+    if req_data['api_key'] != api_key:
+        return json.dumps({'status': False, 'description': 'invalid api key'})
+
+    if 'username' not in session:
+        return json.dumps({'status': False, 'description': 'user is not logged in'})
+
+    status, description = database.delete_chat(req_data['chat_id'], session['username'])
+
+    return json.dumps({'status': status, 'description': description})
+
+
 @app.route('/set_enrollment', methods=['POST'])
 def set_enrollment():
     req_data = parse_request()

@@ -262,6 +262,20 @@ class MySQLManager(DBManager):
 
             return True, 'chat information has been updated'
 
+    def delete_chat(self, chat_id, username):
+        with pymysql.connect(**config) as cursor:
+            # check if user is a moderator
+            cursor.execute(
+                "SELECT 1 FROM enrollments WHERE (chat_id, username, moderator)=(%s, %s, 1)", (chat_id, username))
+            if cursor.fetchone() is None:
+                return False, 'user has insufficient rights to edit the chat'
+
+            cursor.execute("DELETE FROM enrollments WHERE chat_id=%s", (chat_id,))
+            cursor.execute("DELETE FROM messages WHERE chat_id=%s", (chat_id,))
+            cursor.execute("DELETE FROM chats WHERE chat_id=%s", (chat_id,))
+
+            return True, 'chat information has been updated'
+
     def new_message(self, chat_id, username, message):
 
         with pymysql.connect(**config) as cursor:
