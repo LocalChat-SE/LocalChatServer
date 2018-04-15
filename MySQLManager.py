@@ -301,6 +301,10 @@ class MySQLManager(DBManager):
             if cursor.fetchone() is not None:
                 return False, 'user is already enrolled'
 
+            cursor.execute("SELECT 1 FROM enrollments WHERE chat_id=%s", (chat_id,))
+            if len(cursor.fetchall()) >= 50:
+                return False, 'chat room is already full'
+
             cursor.execute("INSERT INTO enrollments VALUES (%s, %s, %s, 0)", (chat_id, username, modded))
 
             return True, 'user added to chat'
