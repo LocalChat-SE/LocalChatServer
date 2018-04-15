@@ -286,8 +286,10 @@ def get_chat():
     if 'username' not in session:
         return json.dumps({'status': False, 'description': 'user is not logged in'})
 
+    timestamp = None if req_data['time'] == '' else req_data['time']
+
     status, description, data = database.get_chat(
-        req_data['chat_id'], session['username'], req_data['limit'], req_data['offset'])
+        req_data['chat_id'], session['username'], timestamp, req_data['limit'], req_data['offset'])
 
     return json.dumps({
         'status': status,

@@ -158,7 +158,7 @@ class MySQLManager(DBManager):
             return True, 'chats fetched', chats
 
     # returns chat info, enrolls, last n messages
-    def get_chat(self, chat_id, username, limit=50, offset=0):
+    def get_chat(self, chat_id, username, time=None, limit=50, offset=0):
         with pymysql.connect(**config) as cursor:
 
             # user must be a non-banned member
@@ -175,6 +175,7 @@ class MySQLManager(DBManager):
                 ST_X(location) AS "latitude", 
                 ST_Y(location) AS "longitude" 
                 FROM chats WHERE chat_id=%s""", [chat_id])
+
             record = cursor.fetchone()
             chat = {
                 'name': record[0],
@@ -191,11 +192,18 @@ class MySQLManager(DBManager):
             #          for user, mod, ban in cursor.fetchall()}
 
             # MESSAGES
-            cursor.execute("""
-                SELECT message_id, username, send_date, value 
-                FROM messages 
-                WHERE chat_id=%s 
-                ORDER BY send_date""", (chat_id,))
+            if time is None:
+                cursor.execute("""
+                    SELECT message_id, username, send_date, value
+                    FROM messages
+                    WHERE chat_id=%s AND send_date>=%s
+                    ORDER BY send_date""", (chat_id, time))
+            else:
+                cursor.execute("""
+                    SELECT message_id, username, send_date, value
+                    FROM messages
+                    WHERE chat_id=%s
+                    ORDER BY send_date""", (chat_id,))
 
             messages = [{'id': mesg_id, 'username': user, 'time': str(time.now()), 'value': mesg}
                         for mesg_id, user, time, mesg in cursor.fetchall()]
@@ -206,9 +214,11 @@ class MySQLManager(DBManager):
                 FROM enrollments
                 WHERE chat_id=%s""", (chat_id,))
 
-            labels = ['username', 'moderator', 'banned']
-            enrollments = [{labels[idx]: field for idx, field in enumerate(record)}
-                           for record in cursor.fetchall()]
+            enrollments = [{
+                'username': record[0],
+                'moderator': bool(ord(record[1])),
+                'banned': bool(ord(record[2]))
+            } for record in cursor.fetchall()]
 
             return True, 'chat collected', {
                 **chat,
@@ -225,7 +235,7 @@ class MySQLManager(DBManager):
             data = (uuid, datetime.now(), name, location, description)
 
             cursor.execute("INSERT INTO chats VALUES (%s, %s, %s, ST_GeomFromText(%s), %s)", data)
-            
+
             return True, 'new chat added', {
                 'chat_id': uuid,
                 'name': name,
