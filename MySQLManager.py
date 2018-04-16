@@ -342,8 +342,12 @@ class MySQLManager(DBManager):
             if cursor.fetchone() is not None:
                 return False, 'a moderator may not be banned'
 
+            # catch case where decoding failed
+            if type(status) is not bool:
+                status = status.lower() == 'true'
+
             cursor.execute(
                 "UPDATE enrollments SET banned=%s WHERE (chat_id, username)=(%s, %s)",
-                (int(status.lower() == 'true'), chat_id, username))
+                (int(status), chat_id, username))
 
             return True, 'user ban has been set/unset'
